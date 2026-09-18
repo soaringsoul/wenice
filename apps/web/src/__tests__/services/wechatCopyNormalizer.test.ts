@@ -417,6 +417,24 @@ describe("wechatCopyNormalizer", () => {
     ).toBe("");
   });
 
+  it("materializes unitless text line-height without changing the root inheritance", () => {
+    const container = document.createElement("div");
+    container.innerHTML = `
+      <section id="wemd" style="font-size:16px;line-height:1.8;">
+        <p id="body" style="font-size:16px;line-height:1.8;">两行正文<br>不会被误报</p>
+      </section>
+    `;
+
+    normalizeCopyContainer(container);
+
+    expect((container.firstElementChild as HTMLElement).style.lineHeight).toBe(
+      "1.8",
+    );
+    expect(
+      (container.querySelector("#body") as HTMLElement).style.lineHeight,
+    ).toBe("28.8px");
+  });
+
   it("adds click fallback to touch-only SVG animations", () => {
     const container = document.createElement("div");
     container.innerHTML = `
