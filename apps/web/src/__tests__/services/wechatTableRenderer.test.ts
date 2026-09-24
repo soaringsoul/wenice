@@ -24,6 +24,8 @@ describe("wechatTableRenderer", () => {
     expect(cell.style.whiteSpace).toBe("normal");
     expect(cell.style.overflowWrap).toBe("anywhere");
     expect(cell.style.wordBreak).toBe("break-word");
+    expect(cell.style.lineHeight.endsWith("px")).toBe(true);
+    expect(Number.parseFloat(cell.style.lineHeight)).toBeGreaterThanOrEqual(14);
   });
 
   it("自动换行时覆盖主题单元格最小宽度并在关闭后恢复", async () => {

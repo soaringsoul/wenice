@@ -5,7 +5,7 @@ export const basicTheme = `/* 默认样式，最佳实践 */
   font-size: 16px;
   color: #000000;
   padding: 0 8px;
-  line-height: 1.6;
+  line-height: 26px;
   word-spacing: 0px;
   letter-spacing: 0px;
   word-break: break-word;
@@ -107,7 +107,8 @@ export const basicTheme = `/* 默认样式，最佳实践 */
 
 #wemd .multiquote-1 {
   display: block;
-  font-size: 0.9em;
+  font-size: 14px;
+  line-height: 26px;
   overflow: auto;
   overflow-scrolling: touch;
   border-left: 3px solid rgba(0, 0, 0, 0.4);

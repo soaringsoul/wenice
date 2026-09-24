@@ -9,23 +9,38 @@ const previewCss = readFileSync(
 );
 
 describe("MarkdownPreview responsive layout", () => {
-  it("桌面预览保持固定的公众号画布宽度", () => {
+  it("桌面预览用 Raphael 式白圆角卡片，手机画布 480px", () => {
+    expect(previewCss).toContain(".preview-stage");
+    expect(previewCss).not.toContain("preview-phone__island");
+    expect(previewCss).not.toContain("preview-phone__home");
     expect(previewCss).toMatch(
-      /\.preview-content\s*\{[\s\S]*?box-sizing:\s*border-box;[\s\S]*?width:\s*402px;/,
+      /\.preview-stage\[data-device=["']phone["']\]\s*\{[\s\S]*?width:\s*min\(480px,\s*100%\);/,
+    );
+    expect(previewCss).toMatch(
+      /\.preview-stage\s*\{[\s\S]*?border-radius:\s*24px;/,
+    );
+    expect(previewCss).toMatch(
+      /\.preview-stage\s*\{[\s\S]*?background:\s*#fff;/,
+    );
+  });
+
+  it("电脑预览把卡片拉到可用宽度，上限 720px", () => {
+    expect(previewCss).toMatch(
+      /\.preview-stage\[data-device=["']desktop["']\]\s*\{[\s\S]*?width:\s*min\(720px,\s*100%\);/,
     );
   });
 
   it("预留稳定的竖向滚动条槽，避免画布在输入时左右抖动", () => {
     expect(previewCss).toMatch(
-      /\.preview-container\s*\{[\s\S]*?scrollbar-gutter:\s*stable\s+both-edges;/,
+      /\.preview-stage__screen\s*\{[\s\S]*?scrollbar-gutter:\s*stable\s+both-edges;/,
     );
   });
 
-  it("桌面预览在 402px 画布中保留足够的正文宽度", () => {
+  it("手机屏内正文宽度足够阅读", () => {
     expect(previewCss).toMatch(
-      /\.preview-content\s*\{[\s\S]*?padding:\s*44px\s+24px\s+80px;/,
+      /\.preview-content\s*\{[\s\S]*?padding:\s*32px\s+28px\s+56px;/,
     );
-    expect(402 - 24 * 2).toBeGreaterThanOrEqual(350);
+    expect(480 - 28 * 2).toBeGreaterThanOrEqual(420);
   });
 
   it("仅移动布局使用容器宽度", () => {

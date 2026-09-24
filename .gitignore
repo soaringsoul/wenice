@@ -13,6 +13,8 @@ apps/electron/dist/
 apps/electron/web-dist/
 apps/electron/release/
 .tmp/
+logs/
+.wenice-web.pid
 
 # AI Agent files
 .agentdocs/

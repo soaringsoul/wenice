@@ -8,6 +8,8 @@ import {
   processHtml,
   whitespaceGalleryTheme,
 } from "@wemd/core";
+import { composeDitubangThemeCss } from "../../config/ditubangColumns";
+import { renderTableBlocks } from "../../services/wechatTableRenderer";
 import {
   applyLightRootVars,
   resolveInlineStyleVariablesForCopy,
@@ -574,5 +576,82 @@ describe("wechat copy css integration", () => {
     expect(pre!.style.borderRadius).toBe("8px");
     expect(code!.style.background).toBe("transparent");
     expect(code!.style.borderRadius).toBe("0");
+  });
+
+  it("地图帮主题复制后没有无单位行高，且 px 行高不小于字号", async () => {
+    const html = `
+      <p class="column-kicker"><span class="content">地图新手村</span></p>
+      <h1><span class="prefix"></span><span class="content">欢迎使用 WeMD</span><span class="suffix"></span></h1>
+      <h2><span class="content">公众号生产线说明</span></h2>
+      <p>公众号素材审校要过两道关：预览稿可读、复制到后台不叠字。多行正文必须把行高写成像素。</p>
+      <blockquote><p>注释卡：口径说明写在这里，不要缩进。</p></blockquote>
+      <div class="table-container">
+        <table>
+          <thead><tr><th>目录</th><th>说明</th></tr></thead>
+          <tbody><tr><td>01-策划</td><td>选题、结构、留资关键词</td></tr></tbody>
+        </table>
+      </div>
+    `;
+    const css = composeDitubangThemeCss("xinsoucun");
+    const output = resolveInlineStyleVariablesForCopy(
+      processHtml(html, css, true, true),
+    );
+    const container = document.createElement("div");
+    container.innerHTML = output;
+    document.body.appendChild(container);
+    await renderTableBlocks(container, true);
+    normalizeCopyContainer(container);
+
+    const textBlocks = new Set([
+      "P",
+      "H1",
+      "H2",
+      "H3",
+      "H4",
+      "H5",
+      "H6",
+      "SECTION",
+      "BLOCKQUOTE",
+      "LI",
+      "TD",
+      "TH",
+      "PRE",
+      "FIGCAPTION",
+    ]);
+    const offenders: string[] = [];
+    container.querySelectorAll<HTMLElement>("*").forEach((node) => {
+      if (node.classList.contains("mac-sign")) return;
+      const tag = node.tagName;
+      const lineHeight = node.style.lineHeight.trim();
+      const fontSize = node.style.fontSize.trim();
+      if (textBlocks.has(tag)) {
+        if (!lineHeight) {
+          offenders.push(`${tag.toLowerCase()} missing line-height`);
+          return;
+        }
+        if (fontSize.endsWith("em") || fontSize.endsWith("rem")) {
+          offenders.push(
+            `${tag.toLowerCase()} font-size=${fontSize} still relative`,
+          );
+        }
+      }
+      if (!lineHeight) return;
+      if (/^(?:\d+(?:\.\d+)?|\.\d+)$/.test(lineHeight)) {
+        offenders.push(
+          `${tag.toLowerCase()}.${node.className} line-height=${lineHeight}`,
+        );
+        return;
+      }
+      if (!lineHeight.endsWith("px") || !fontSize.endsWith("px")) {
+        return;
+      }
+      const lh = Number.parseFloat(lineHeight);
+      const fs = Number.parseFloat(fontSize);
+      if (lh < fs) {
+        offenders.push(`${tag.toLowerCase()} ${lineHeight} < ${fontSize}`);
+      }
+    });
+    container.remove();
+    expect(offenders).toEqual([]);
   });
 });

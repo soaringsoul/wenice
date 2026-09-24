@@ -33,6 +33,7 @@ export { normalizeCopyContainer, stripCopyMetadata };
 
 interface CopyToWechatOptions {
   showMacBar?: boolean;
+  prefixHtml?: string;
 }
 
 const buildCopyCss = (themeCss: string) => {
@@ -261,9 +262,11 @@ export async function copyToWechat(
     const rawHtml = parser.render(markdown);
     const themedCss = buildCopyCss(css);
     const sanitizedCss = stripCounterPseudoRules(themedCss);
-    const sourceHtml = getPublishingPreference("linkToFootnote")
-      ? convertLinksToFootnotes(rawHtml)
-      : rawHtml;
+    const sourceHtml =
+      (options.prefixHtml ?? "") +
+      (getPublishingPreference("linkToFootnote")
+        ? convertLinksToFootnotes(rawHtml)
+        : rawHtml);
     const materializedHtml = materializeCounterPseudoContent(
       sourceHtml,
       themedCss,

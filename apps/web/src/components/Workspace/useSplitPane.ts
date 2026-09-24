@@ -13,10 +13,11 @@ const LEGACY_RATIO_KEY = "wemd-editor-pane-ratio";
 const DEFAULT_RATIO = 0.58;
 const DIVIDER_WIDTH = 16;
 const MIN_EDITOR_WIDTH = 340;
-const PREVIEW_CANVAS_WIDTH = 402;
+// 480px 手机卡片 + preview-container 左右各 16px
+const PREVIEW_CANVAS_WIDTH = 512;
 // 首帧回退值；挂载后按浏览器实际 gutter 与面板边框动态更新
-export const DEFAULT_MIN_PREVIEW_WIDTH = 416;
-const DEFAULT_DESKTOP_APP_MIN_WIDTH = 1080;
+export const DEFAULT_MIN_PREVIEW_WIDTH = 528;
+const DEFAULT_DESKTOP_APP_MIN_WIDTH = 1192;
 // 键盘微调步长(像素),Shift 加速
 const KEYBOARD_STEP = 16;
 const KEYBOARD_STEP_LARGE = 64;

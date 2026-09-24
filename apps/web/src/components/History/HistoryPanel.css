@@ -8,26 +8,28 @@
   overflow: visible;
 }
 
+/* 侧栏内的「新建文章」：浅色强调钮（03 册 §2），顶栏已有唯一主按钮 */
 .history-new-article-button {
-  height: 42px;
-  margin: 18px 14px 8px;
+  height: var(--control-h);
+  margin: var(--space-4) 14px var(--space-2);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  border: 1px solid color-mix(in srgb, var(--accent-primary) 82%, #000);
-  border-radius: 8px;
-  background: var(--accent-primary);
-  color: var(--on-accent);
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: 0 5px 10px -8px
-    color-mix(in srgb, var(--accent-primary) 78%, transparent);
+  gap: 6px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
 }
 
 .history-new-article-button:hover,
 .history-new-article-button:focus-visible {
-  background: var(--accent-active);
+  background: var(--brand-soft-strong);
 }
 
 .history-header {
@@ -127,20 +129,21 @@
   width: 100%;
   height: 30px;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   padding: 0 10px 0 32px;
   font-size: 12px;
-  background: color-mix(in srgb, var(--bg-secondary) 78%, transparent);
-  transition: all 0.2s ease;
-  backdrop-filter: blur(4px);
-  color: var(--text-primary);
+  background: var(--surface-soft);
+  transition:
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+  color: var(--ink);
 }
 
 .history-search input:focus {
-  background: var(--bg-primary);
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px
-    color-mix(in srgb, var(--accent-primary) 25%, transparent);
+  background: var(--surface);
+  border-color: var(--brand);
+  box-shadow: var(--focus-ring);
   outline: none;
 }
 
@@ -178,13 +181,18 @@
 }
 
 .history-item:hover {
-  background: color-mix(in srgb, var(--bg-hover) 68%, transparent);
+  background: var(--surface-soft);
 }
 
+/* 当前文章：浅橙底 + 橙字 + 右缘 2px 橙条（03 册 §6 侧栏） */
 .history-item.active {
-  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  background: var(--brand-soft);
   border-color: transparent;
-  box-shadow: none;
+  box-shadow: inset -2px 0 0 var(--brand);
+}
+
+.history-item.active .history-title {
+  color: var(--brand-dark);
 }
 
 .history-item-main {
@@ -220,8 +228,8 @@
 
 .history-theme {
   font-size: 9px;
-  color: var(--accent-primary);
-  font-weight: 600;
+  color: var(--brand-heavy);
+  font-weight: 500;
   letter-spacing: 0;
 }
 
@@ -279,9 +287,8 @@
 }
 
 .history-action-trigger:hover {
-  background: var(--bg-hover);
-  color: var(--text-secondary);
-  transform: scale(1.1);
+  background: var(--surface-soft);
+  color: var(--ink);
 }
 
 .history-action-menu {
@@ -291,10 +298,10 @@
   gap: 4px;
   padding: 8px;
   border-radius: var(--radius-md);
-  background: var(--bg-primary);
-  border: var(--border-width) solid var(--border-light);
-  box-shadow: var(--shadow-lg);
-  z-index: 1200;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-dropdown);
   min-width: 180px;
   white-space: nowrap;
 }
@@ -346,81 +353,76 @@
   font-size: 13px;
 }
 
-/* 清空历史确认弹层 */
+/* 清空 / 删除确认弹层：模态二次确认，危险钮描边形态（03 册 §8.2） */
 .history-confirm-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1300;
+  z-index: var(--z-modal);
 }
 
 .history-confirm-modal {
-  background: var(--bg-primary);
-  border: var(--border-width) solid var(--border-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  padding: 20px 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-5) var(--space-6);
   width: min(360px, 90vw);
-  color: var(--text-primary);
+  color: var(--ink);
 }
 
 .history-confirm-modal h4 {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .history-confirm-modal p {
-  margin: 0 0 16px;
-  color: var(--text-secondary);
-  line-height: 1.6;
+  margin: 0 0 var(--space-4);
+  color: var(--ink-secondary);
+  line-height: 1.57;
 }
 
 .history-confirm-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: var(--space-2);
 }
 
 .history-confirm-actions button {
-  min-width: 92px;
-  height: 36px;
-  border-radius: 18px;
-  border: 1px solid var(--border-light);
-  background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 600;
+  min-width: 76px;
+  height: var(--control-h);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 400;
   cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 0 16px;
+  transition:
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+  padding: 0 15px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .history-confirm-actions button:hover {
-  background: var(--bg-hover);
-  border-color: color-mix(
-    in srgb,
-    var(--border-light) 60%,
-    var(--accent-primary) 40%
-  );
+  border-color: var(--brand);
+  color: var(--brand);
 }
 
 .history-confirm-actions .btn-danger {
-  border-color: color-mix(in srgb, var(--error) 65%, transparent);
-  background: color-mix(in srgb, var(--error) 18%, var(--bg-primary) 82%);
-  color: var(--error);
+  border-color: var(--danger);
+  background: var(--surface);
+  color: var(--danger);
 }
 
 .history-confirm-actions .btn-danger:hover {
-  background: color-mix(in srgb, var(--error) 26%, var(--bg-primary) 74%);
-  border-color: var(--error);
-  border-color: var(--error);
-  box-shadow: 0 8px 16px color-mix(in srgb, var(--error) 24%, transparent);
+  border-color: #ff7875;
+  color: #ff7875;
 }

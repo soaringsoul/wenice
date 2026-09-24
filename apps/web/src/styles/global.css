@@ -1,62 +1,5 @@
-/* 全局样式 - 现代亮色主题 */
+/* 全局样式 —— 令牌在 src/index.css 的 :root 统一声明，这里只放基础重置与元素默认态 */
 @import "./local-fonts.css";
-
-:root {
-  --bg-page: var(--ui-bg-page);
-  --bg-primary: var(--ui-bg-primary);
-  --bg-secondary: var(--ui-bg-secondary);
-  --bg-tertiary: var(--ui-bg-tertiary);
-  --bg-hover: var(--ui-bg-hover);
-  --bg-card-muted: var(--ui-bg-card-muted);
-
-  --text-primary: var(--ui-text-primary);
-  --text-secondary: var(--ui-text-secondary);
-  --text-tertiary: var(--ui-text-tertiary);
-
-  --glass-bg: color-mix(in srgb, var(--ui-bg-primary) 92%, transparent);
-  --glass-border: color-mix(in srgb, var(--ui-border-color) 40%, transparent);
-  --glass-shadow: var(--ui-shadow-lg);
-  --glass-blur: var(--ui-glass-blur);
-
-  --border-color: var(--ui-border-color);
-  --border-light: var(--ui-border-light);
-
-  --accent-primary: var(--ui-accent-primary);
-  --accent-hover: var(--ui-accent-hover);
-  --accent-active: var(--ui-accent-active);
-  --accent-gradient: var(--ui-accent-gradient);
-  --on-accent: var(--ui-on-accent);
-
-  --success: #10b981;
-  --success-bg: #ecfdf5;
-  --warning: #f59e0b;
-  --error: #ef4444;
-
-  --shadow-sm: var(--ui-shadow-sm);
-  --shadow-md: var(--ui-shadow-md);
-  --shadow-lg: var(--ui-shadow-lg);
-  --shadow-premium:
-    0 0 0 var(--border-width)
-      color-mix(in srgb, var(--ui-border-color) 25%, transparent),
-    var(--ui-shadow-md);
-
-  --radius-sm: var(--ui-radius-sm);
-  --radius-md: var(--ui-radius-md);
-  --radius-lg: var(--ui-radius-lg);
-  --radius-xl: var(--ui-radius-xl);
-
-  --font-sans: var(
-    --ui-font-sans,
-    -apple-system,
-    BlinkMacSystemFont,
-    "SF Pro Text",
-    "Segoe UI",
-    "Roboto",
-    "Helvetica Neue",
-    sans-serif
-  );
-  --font-mono: var(--ui-font-mono);
-}
 
 * {
   margin: 0;
@@ -66,14 +9,15 @@
 
 body {
   font-family: var(--font-sans);
-  background: var(--bg-page);
-  color: var(--text-primary);
-  line-height: 1.6;
+  background: var(--layout-bg);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.57;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 滚动条样式 - 更加纤细现代 */
+/* 滚动条：纤细、中性 */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -84,66 +28,80 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  transition: background 0.2s;
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+  border-radius: var(--radius-pill);
+  transition: background var(--dur) ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
+  background: color-mix(in srgb, var(--muted) 75%, transparent);
 }
 
 /* 选中文本 */
 ::selection {
-  background: color-mix(in srgb, var(--accent-primary) 25%, transparent);
+  background: rgba(var(--brand-rgb), 0.2);
   color: inherit;
 }
 
-/* 按钮基础样式 */
+/* 按钮基础样式：描边优先、无位移 */
 button {
   font-family: var(--font-sans);
   cursor: pointer;
-  border: var(--border-width) solid transparent;
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  outline: none;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  transition: all 0.2s ease;
+  background: var(--surface-soft);
+  color: var(--ink);
+  transition:
+    color var(--dur-fast) ease,
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
 }
 
 button:disabled {
-  opacity: 0.5;
+  color: var(--ink-disabled);
   cursor: not-allowed;
 }
 
 /* 输入框基础样式 */
 input,
-textarea {
+textarea,
+select {
   font-family: var(--font-sans);
-  outline: none;
 }
 
-/* 链接 */
+/* 焦点：全矩阵唯一焦点样式 */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* 链接：白底小字用 --brand-heavy 保证对比 */
 a {
-  color: var(--accent-primary);
+  color: var(--brand-heavy);
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: color var(--dur-fast) ease;
 }
 
 a:hover {
-  color: var(--accent-hover);
+  color: var(--brand-dark);
+  text-decoration: underline;
 }
 
 /* 动画 */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -170,15 +128,27 @@ a:hover {
   }
 }
 
-/* 工具类 */
-.gradient-text {
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
 .fs-title,
 .history-title {
   -webkit-text-fill-color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

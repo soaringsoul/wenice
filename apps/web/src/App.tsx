@@ -76,6 +76,7 @@ function App() {
   const copyToWechat = useEditorStore((state) => state.copyToWechat);
   const copyAsHtml = useEditorStore((state) => state.copyAsHtml);
   const [showThemePanel, setShowThemePanel] = useState(false);
+  const [desktopPreviewOnly, setDesktopPreviewOnly] = useState(false);
 
   // 自定义主题真源在工作区文件夹，副作用单点启用
   useEffect(() => {
@@ -265,39 +266,41 @@ function App() {
 
       <>
         <Toaster
-          position="top-center"
+          position="top-right"
+          containerStyle={{ top: 68, right: 24, zIndex: 1080 }}
           toastOptions={{
-            className: "premium-toast",
+            className: "dtb-toast",
+            duration: 3000,
             style: {
-              background: "rgba(255, 255, 255, 0.9)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              color: "#1a1a1a",
-              boxShadow: "0 12px 30px -10px rgba(0, 0, 0, 0.12)",
-              borderRadius: "10px",
-              padding: "10px 20px",
+              background: "var(--surface)",
+              color: "var(--ink)",
+              boxShadow: "var(--shadow-md)",
+              borderRadius: "var(--radius-md)",
+              padding: "10px 16px",
               fontSize: "14px",
-              fontWeight: 500,
-              border: "1px solid rgba(0, 0, 0, 0.05)",
+              fontWeight: 400,
+              border: "1px solid var(--line)",
               maxWidth: "400px",
             },
             success: {
               iconTheme: {
-                primary: "var(--accent-primary)",
+                primary: "var(--success)",
                 secondary: "var(--on-accent)",
               },
-              duration: 2000,
             },
             error: {
               iconTheme: {
-                primary: "#ef4444",
+                primary: "var(--danger)",
                 secondary: "#fff",
               },
-              duration: 3000,
             },
           }}
         />
-        <Header />
+        <Header
+          showPreviewToggle={!isMobile}
+          previewOnly={desktopPreviewOnly}
+          onTogglePreview={() => setDesktopPreviewOnly((current) => !current)}
+        />
         <main
           className={mainClass}
           style={mainStyle}
@@ -343,7 +346,9 @@ function App() {
               fileLoading ||
               (historyLoading && !isElectron && storageType === "indexeddb")
             }
-            mobileView={isMobile ? activeView : undefined}
+            mobileView={
+              isMobile ? activeView : desktopPreviewOnly ? "preview" : undefined
+            }
             onPreviewMinimumWidthChange={setDesktopPreviewMinWidth}
           />
 

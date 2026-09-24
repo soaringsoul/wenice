@@ -1,8 +1,15 @@
 // 编辑器状态管理（主题相关功能已迁移到 themeStore.ts）
 import { create } from "zustand";
+import toast from "react-hot-toast";
 import { useThemeStore } from "./themeStore";
 import { copyToWechat as execCopyToWechat } from "../services/wechatCopyService";
 import { copyAsHtml as execCopyAsHtml } from "../services/htmlCopyService";
+import {
+  getDitubangColumn,
+  nonWechatImageUrls,
+  publishingChromeHtml,
+} from "../config/ditubangColumns";
+import { usePublishingStore } from "./publishingStore";
 
 export interface ResetOptions {
   markdown?: string;
@@ -26,8 +33,8 @@ interface EditorStore {
   setWorkspaceDir: (dir?: string) => void;
 
   resetDocument: (options?: ResetOptions) => void;
-  copyToWechat: () => void;
-  copyAsHtml: () => void;
+  copyToWechat: () => Promise<void>;
+  copyAsHtml: () => Promise<void>;
 }
 
 export const defaultMarkdown = `# 欢迎使用 WeMD
@@ -187,9 +194,23 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       themeStore.customThemes.find((t) => t.id === themeStore.themeId) ||
       themeStore.getAllThemes().find((t) => t.id === themeStore.themeId);
     const showMacBar = currentTheme?.designerVariables?.showMacBar ?? false;
+    const foreignImages = nonWechatImageUrls(markdown);
+    if (foreignImages.length > 0) {
+      toast(`有 ${foreignImages.length} 张图不是微信图床，粘贴后可能无法显示`, {
+        duration: 4000,
+      });
+    }
+    let prefixHtml = "";
+    if (themeStore.themeId === "ditubang") {
+      const publishing = usePublishingStore.getState();
+      prefixHtml = publishingChromeHtml({
+        columnName: getDitubangColumn(publishing.columnId).name,
+        issue: publishing.issue,
+      });
+    }
 
     try {
-      await execCopyToWechat(markdown, css, { showMacBar });
+      await execCopyToWechat(markdown, css, { showMacBar, prefixHtml });
     } catch (error) {
       console.error("复制失败:", error);
     }

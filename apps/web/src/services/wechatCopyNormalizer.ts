@@ -498,8 +498,142 @@ const promoteCalloutTitleWeight = (container: HTMLElement): void => {
   });
 };
 
+/** jsdom 的标题字号常是 `1.5em`；微信会把无单位行高当 px，必须乘真实 px 字号。 */
+const resolveFontSizePx = (node: HTMLElement, depth = 0): number => {
+  if (depth > 16) return 16;
+
+  const inline = node.style.fontSize.trim();
+  if (inline.endsWith("px")) {
+    const pixels = Number.parseFloat(inline);
+    if (Number.isFinite(pixels) && pixels > 0) return pixels;
+  }
+
+  const computed = window.getComputedStyle(node).fontSize.trim();
+  if (computed.endsWith("px")) {
+    const pixels = Number.parseFloat(computed);
+    if (Number.isFinite(pixels) && pixels > 0) return pixels;
+  }
+
+  if (inline.endsWith("%") || computed.endsWith("%")) {
+    const percent = Number.parseFloat(inline || computed);
+    const parent = node.parentElement;
+    const parentPx = parent ? resolveFontSizePx(parent, depth + 1) : 16;
+    if (Number.isFinite(percent) && percent > 0)
+      return (percent / 100) * parentPx;
+  }
+
+  if (computed.endsWith("rem") || inline.endsWith("rem")) {
+    const rem = Number.parseFloat(computed.endsWith("rem") ? computed : inline);
+    if (Number.isFinite(rem) && rem > 0) return rem * 16;
+  }
+
+  if (
+    (computed.endsWith("em") && !computed.endsWith("rem")) ||
+    (inline.endsWith("em") && !inline.endsWith("rem"))
+  ) {
+    const em = Number.parseFloat(
+      computed.endsWith("em") && !computed.endsWith("rem") ? computed : inline,
+    );
+    const parent = node.parentElement;
+    const parentPx = parent ? resolveFontSizePx(parent, depth + 1) : 16;
+    if (Number.isFinite(em) && em > 0) return em * parentPx;
+  }
+
+  return 16;
+};
+
+const WECHAT_TEXT_BLOCKS = new Set([
+  "P",
+  "H1",
+  "H2",
+  "H3",
+  "H4",
+  "H5",
+  "H6",
+  "SECTION",
+  "BLOCKQUOTE",
+  "LI",
+  "TD",
+  "TH",
+  "PRE",
+  "FIGCAPTION",
+]);
+
+const UNITLESS_NUMBER = /^(?:\d+(?:\.\d+)?|\.\d+)$/;
+
+const skipWechatLineHeightFix = (node: HTMLElement): boolean => {
+  const tag = node.tagName;
+  if (tag === "SUB" || tag === "SUP") return true;
+  if (node.classList.contains("mac-sign")) return true;
+  return false;
+};
+
+const toPx = (value: number): string => `${Math.round(value * 1000) / 1000}px`;
+
+const materializeInlineFontSizePx = (node: HTMLElement): number => {
+  const inline = node.style.fontSize.trim();
+  const pixels = resolveFontSizePx(node);
+  if (
+    pixels > 0 &&
+    inline &&
+    !inline.endsWith("px") &&
+    (inline.endsWith("em") || inline.endsWith("rem") || inline.endsWith("%"))
+  ) {
+    node.style.fontSize = toPx(pixels);
+  }
+  return pixels;
+};
+
+const materializeWechatLineHeight = (node: HTMLElement): void => {
+  if (skipWechatLineHeightFix(node)) return;
+
+  const fontSize = materializeInlineFontSizePx(node);
+  const raw = node.style.lineHeight.trim();
+  const isTextBlock = WECHAT_TEXT_BLOCKS.has(node.tagName);
+  const fallback = fontSize > 0 ? Math.max(fontSize, fontSize * 1.6) : 0;
+
+  if (UNITLESS_NUMBER.test(raw)) {
+    const multiplier = Number.parseFloat(raw);
+    if (
+      Number.isFinite(fontSize) &&
+      fontSize > 0 &&
+      Number.isFinite(multiplier)
+    ) {
+      node.style.lineHeight = toPx(Math.max(fontSize, fontSize * multiplier));
+    }
+    return;
+  }
+
+  if (raw.endsWith("em") || raw.endsWith("rem")) {
+    const em = Number.parseFloat(raw);
+    const base = raw.endsWith("rem") ? 16 : fontSize;
+    if (Number.isFinite(em) && em > 0 && base > 0) {
+      node.style.lineHeight = toPx(Math.max(fontSize, em * base));
+    }
+    return;
+  }
+
+  if (raw.endsWith("px")) {
+    const lineHeight = Number.parseFloat(raw);
+    if (
+      isTextBlock &&
+      Number.isFinite(lineHeight) &&
+      lineHeight > 0 &&
+      lineHeight < fontSize
+    ) {
+      node.style.lineHeight = toPx(fallback);
+    }
+    return;
+  }
+
+  // 公众号会剥掉最外层行高。引用块等只继承 1.6 时会被当成 1.6px。
+  if (isTextBlock && fallback > 0) {
+    node.style.lineHeight = toPx(fallback);
+  }
+};
+
 const normalizeWechatSpecRules = (container: HTMLElement): void => {
-  container.querySelectorAll<HTMLElement>("[style]").forEach((node) => {
+  container.querySelectorAll<HTMLElement>("*").forEach((node) => {
     const textAlign = node.style.textAlign.trim().toLowerCase();
     if (textAlign === "start" || textAlign === "end") {
       const rtl = getTextDirection(node) === "rtl";
@@ -514,21 +648,7 @@ const normalizeWechatSpecRules = (container: HTMLElement): void => {
       node.style.setProperty("text-align", normalized);
     }
 
-    const lineHeight = node.style.lineHeight.trim();
-    if (
-      node !== container.firstElementChild &&
-      node.style.fontSize &&
-      /^(?:\d+(?:\.\d+)?|\.\d+)$/.test(lineHeight)
-    ) {
-      const fontSize = Number.parseFloat(
-        window.getComputedStyle(node).fontSize,
-      );
-      const multiplier = Number.parseFloat(lineHeight);
-      if (Number.isFinite(fontSize) && fontSize > 0) {
-        const pixels = Math.round(fontSize * multiplier * 1000) / 1000;
-        node.style.lineHeight = `${pixels}px`;
-      }
-    }
+    materializeWechatLineHeight(node);
 
     // 文章展示不需要控制编辑光标，交给公众号编辑器使用默认值。
     node.style.removeProperty("caret-color");

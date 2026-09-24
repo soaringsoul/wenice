@@ -48,27 +48,28 @@ const contrastRatio = (foreground: string, background: string) => {
 };
 
 describe("编辑器 UX 视觉校准", () => {
-  it("亮色模式使用指定的深翡翠绿主色", () => {
+  it("亮色模式主色是地图帮品牌橙，旧强调名只做别名", () => {
     const lightTheme = indexCss.match(/:root\s*\{([\s\S]*?)\n\}/)?.[1];
 
-    expect(lightTheme).toContain("--ui-accent-primary: #047857;");
-    expect(lightTheme).toContain("--ui-accent-hover: #006d3d;");
-    expect(lightTheme).toContain("--ui-accent-active: #006d3d;");
+    expect(lightTheme).toContain("--brand: #fa8c16;");
+    expect(lightTheme).toContain("--ui-accent-primary: var(--brand);");
+    expect(lightTheme).toContain("--ui-accent-hover: var(--brand-hover);");
+    expect(lightTheme).toContain("--ui-accent-active: var(--brand-dark);");
     expect(lightTheme).toContain("--ui-on-accent: #ffffff;");
-    expect(contrastRatio("#ffffff", "#047857")).toBeGreaterThanOrEqual(4.5);
+    // 白底小字橙文本必须用 --brand-heavy 才达 AA
+    expect(contrastRatio("#ad4e00", "#ffffff")).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("暗色模式使用指定翡翠绿并保持按钮文字可读", () => {
+  it("暗色模式只覆盖中性令牌，品牌橙与前景色不变", () => {
     const darkTheme = indexCss.match(
       /\[data-ui-theme="dark"\]\s*\{([\s\S]*?)\n\}/,
     )?.[1];
 
-    expect(darkTheme).toContain("--ui-accent-primary: #13a072;");
-    expect(darkTheme).toContain("--ui-on-accent: #0b1f16;");
-    expect(darkTheme).toContain("--ui-text-tertiary: #949494;");
-    expect(contrastRatio("#0b1f16", "#13a072")).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio("#0b1f16", "#15966a")).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio("#949494", "#2d2d30")).toBeGreaterThanOrEqual(4.5);
+    expect(darkTheme).not.toContain("--ui-accent-primary");
+    expect(darkTheme).not.toContain("--brand:");
+    expect(darkTheme).toContain("--surface: #1f1f1f;");
+    expect(darkTheme).toContain("--muted: rgba(255, 255, 255, 0.45);");
+    expect(contrastRatio("#ffffff", "#1f1f1f")).toBeGreaterThanOrEqual(4.5);
     expect(appTsx).toContain('secondary: "var(--on-accent)"');
   });
 
@@ -94,32 +95,37 @@ describe("编辑器 UX 视觉校准", () => {
     expect(appTsx).toContain("ChevronLeft");
     expect(appTsx).toContain("ChevronRight");
     expect(appCss).toMatch(
-      /\.history-toggle:focus-visible\s*\{[\s\S]*?outline:\s*2px solid var\(--accent-primary\);/,
+      /\.history-toggle:focus-visible\s*\{[\s\S]*?box-shadow:\s*var\(--focus-ring\);/,
     );
   });
 
   it("文件栏关键操作保留清晰的键盘焦点", () => {
     expect(fileSidebarCss).toMatch(
-      /\.fs-workspace-info:focus-visible,[\s\S]*?\.fs-sort-option:focus-visible\s*\{[\s\S]*?outline:\s*2px solid var\(--accent-primary\);/,
+      /\.fs-workspace-info:focus-visible,[\s\S]*?\.fs-sort-option:focus-visible\s*\{[\s\S]*?box-shadow:\s*var\(--focus-ring\);/,
     );
     expect(fileSidebarCss).toMatch(
       /\.fs-quick-actions\s*\{[\s\S]*?justify-content:\s*space-between;/,
     );
   });
 
-  it("文件栏融入页面背景且不使用描边卡片强调选中项", () => {
+  it("车间态侧栏：白底描边容器，选中项浅橙底 + 右缘橙条而不是描边卡片", () => {
     expect(appCss).toMatch(
-      /\.history-pane__content\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?border-right:\s*0;/,
+      /\.history-pane__content\s*\{[\s\S]*?background:\s*var\(--surface\);[\s\S]*?border:\s*1px solid var\(--line\);/,
     );
     expect(fileSidebarCss).toMatch(
-      /\.fs-item\.active,[\s\S]*?\.fs-folder\.active\s*\{[\s\S]*?border-color:\s*transparent;/,
+      /\.fs-item\.active,[\s\S]*?\.fs-folder\.active\s*\{[\s\S]*?border-color:\s*transparent;[\s\S]*?background:\s*var\(--brand-soft\);[\s\S]*?color:\s*var\(--brand-dark\);[\s\S]*?box-shadow:\s*inset -2px 0 0 var\(--brand\);/,
     );
     expect(historyPanelCss).toMatch(
-      /\.history-item\.active\s*\{[\s\S]*?border-color:\s*transparent;/,
+      /\.history-item\.active\s*\{[\s\S]*?background:\s*var\(--brand-soft\);[\s\S]*?border-color:\s*transparent;[\s\S]*?box-shadow:\s*inset -2px 0 0 var\(--brand\);/,
     );
     expect(sidebarFooterCss).toMatch(
-      /\.sidebar-footer\s*\{[\s\S]*?border-top:\s*0;/,
+      /\.sidebar-footer\s*\{[\s\S]*?border-top:\s*1px solid var\(--line\);/,
     );
+    // 编辑器 / 预览容器：描边卡片，不做 hover 加影
+    expect(appCss).toMatch(
+      /\.editor-pane,\s*\.preview-pane\s*\{[\s\S]*?border-radius:\s*var\(--radius-md\);[\s\S]*?border:\s*1px solid var\(--line\);/,
+    );
+    expect(appCss).not.toMatch(/\.editor-pane:hover/);
   });
 
   it("文件列表滚动条在未悬停时保持可见", () => {
@@ -131,8 +137,10 @@ describe("编辑器 UX 视觉校准", () => {
     );
   });
 
-  it("全局反馈提示使用克制圆角而不是胶囊形", () => {
-    expect(appTsx).toContain('borderRadius: "10px"');
+  it("全局反馈提示右上角、卡片圆角、无毛玻璃", () => {
+    expect(appTsx).toContain('position="top-right"');
+    expect(appTsx).toContain('borderRadius: "var(--radius-md)"');
+    expect(appTsx).not.toContain("backdropFilter");
     expect(appTsx).not.toContain('borderRadius: "50px"');
   });
 });

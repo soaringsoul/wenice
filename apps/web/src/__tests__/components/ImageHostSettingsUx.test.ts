@@ -24,7 +24,7 @@ const settingsCss = readFileSync(
 
 describe("图床设置弹窗视觉与滚动约束", () => {
   it("顶栏入口和弹窗标题均使用图床设置", () => {
-    expect(headerSource).toMatch(/>\s*图床设置\s*<\/button>/);
+    expect(headerSource).toMatch(/id:\s*"imageHost",\s*label:\s*"图床设置"/);
     expect(headerSource).toMatch(/title="图床设置"/);
   });
 
@@ -57,12 +57,12 @@ describe("图床设置弹窗视觉与滚动约束", () => {
     );
   });
 
-  it("通用弹窗采用统一的 12px 圆角", () => {
+  it("通用弹窗采用 03 册模态形态：--radius-md 圆角，窄屏抽屉 --radius-lg", () => {
     expect(modalCss).toMatch(
-      /\.modal-panel\s*\{[\s\S]*?border-radius:\s*12px;/,
+      /\.modal-panel\s*\{[\s\S]*?border-radius:\s*var\(--radius-md\);/,
     );
     expect(modalCss).toMatch(
-      /@media \(max-width: 640px\)\s*\{[\s\S]*?\.modal-panel,[\s\S]*?border-radius:\s*12px;/,
+      /@media \(max-width: 640px\)\s*\{[\s\S]*?\.modal-panel,[\s\S]*?border-radius:\s*var\(--radius-lg\);/,
     );
   });
 

@@ -3,14 +3,14 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--bg-page) 94%, var(--bg-secondary));
+  background: var(--layout-bg);
 }
 
-/* 桌面布局最小内容宽度以 1080px 为回退值；运行时按实际滚动条槽同步扩大外层宽度，
-   保证文件栏、编辑器(≥340)、分隔条和固定预览画布都能完整容纳。
+/* 桌面布局最小内容宽度以 1192px 为回退值；运行时按实际滚动条槽同步扩大外层宽度，
+   保证文件栏、编辑器(≥340)、分隔条和 480px 手机预览画布都能完整容纳。
    视口比它更窄时整体横向滚动,而不是让顶栏/三栏挤压重叠。移动布局不受此约束 */
 .app[data-layout-mode="desktop"] {
-  min-width: 1080px;
+  min-width: 1192px;
 }
 
 .app-main {
@@ -19,8 +19,9 @@
   min-height: 0;
   display: grid;
   grid-template-columns: var(--history-width, 256px) minmax(0, 1fr);
-  gap: 16px;
-  padding: 12px 28px 28px;
+  gap: var(--space-4);
+  /* 车间壳主区内距（04 册 §2）：24px 28px */
+  padding: var(--space-6) 28px;
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
@@ -43,13 +44,14 @@
   background: transparent;
 }
 
+/* 车间态侧栏：白底 + --line 右边线，不做深色侧栏（03 册 §6） */
 .history-pane__content {
   height: 100%;
   min-height: 0;
-  border-radius: 0;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  background: transparent;
-  border-right: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
   transition:
     transform 220ms cubic-bezier(0.25, 1, 0.5, 1),
     opacity 160ms ease;
@@ -95,45 +97,52 @@
   width: 100%;
 }
 
+/* 编辑器 / 预览容器：描边卡片，无 hover 加影、无位移（03 册 §4） */
 .editor-pane,
 .preview-pane {
   height: 100%;
   min-height: 0;
-  border-radius: 12px;
-  background: var(--bg-primary);
-  border: 1px solid color-mix(in srgb, var(--border-light) 74%, transparent);
-  box-shadow: 0 10px 32px -26px rgba(15, 23, 42, 0.65);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: none;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease;
 }
 
-.editor-pane:hover,
-.preview-pane:hover {
-  box-shadow: 0 12px 36px -28px rgba(15, 23, 42, 0.72);
-  border-color: color-mix(in srgb, var(--border-color) 88%, transparent);
+.workspace[data-mobile-view="preview"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.workspace[data-mobile-view="preview"] .editor-pane,
+.workspace[data-mobile-view="preview"] .workspace-resize-handle {
+  display: none;
+}
+
+.workspace[data-mobile-view="preview"] .preview-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 @media (max-width: 1440px) {
   .app-main {
     --app-main-inline-padding: 20px;
-    padding: 12px 20px 20px;
+    padding: var(--space-5) 20px;
   }
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 1200px) {
   .app-main {
-    gap: 12px;
+    gap: var(--space-3);
   }
 }
 
-@media (max-width: 960px) {
+@media (max-width: 992px) {
   .app-main {
     --app-main-inline-padding: 12px;
-    padding: 10px 12px 16px;
+    padding: var(--space-3) 12px var(--space-4);
   }
 }
 
@@ -169,7 +178,7 @@
 
   .app[data-layout-mode="mobile"] .editor-pane,
   .app[data-layout-mode="mobile"] .preview-pane {
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     min-height: 0;
     height: 100%;
   }
@@ -196,12 +205,6 @@
     flex-direction: column;
     height: 100%;
   }
-
-  .app[data-layout-mode="mobile"] .editor-pane:hover,
-  .app[data-layout-mode="mobile"] .preview-pane:hover {
-    transform: none;
-    box-shadow: none;
-  }
 }
 
 .history-toggle {
@@ -212,34 +215,34 @@
   width: 28px;
   height: 32px;
   padding: 0;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   border: 0;
   background: transparent;
-  color: var(--text-tertiary);
+  color: var(--muted);
   box-shadow: none;
   cursor: pointer;
   transform: translateY(-50%);
   transition:
-    background 160ms ease,
-    color 160ms ease;
+    background var(--dur-fast) ease,
+    color var(--dur-fast) ease;
 }
 
 .history-toggle:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: var(--surface-soft);
+  color: var(--ink);
 }
 
 .history-toggle:focus-visible {
-  outline: 2px solid var(--accent-primary);
-  outline-offset: 2px;
-  color: var(--accent-primary);
+  outline: none;
+  box-shadow: var(--focus-ring);
+  color: var(--ink);
 }
 
 .history-toggle.is-collapsed {
-  color: var(--accent-primary);
+  color: var(--brand-dark);
 }
 
 .sr-only {

@@ -10,7 +10,7 @@
 
 /** 表格专用布局参数（针对手机可读性优化） */
 const TABLE_LAYOUT_STYLES = {
-  lineHeight: "1.4",
+  lineHeightRatio: 1.5,
   cellPadding: "6px 8px",
 } as const;
 
@@ -34,7 +34,16 @@ const applyTableLayoutStyles = (
   const cells = table.querySelectorAll("th, td");
   for (const cell of cells) {
     const el = cell as HTMLElement;
-    el.style.lineHeight = TABLE_LAYOUT_STYLES.lineHeight;
+    const inlineFont = Number.parseFloat(el.style.fontSize);
+    const computedFont = window.getComputedStyle(el).fontSize.trim();
+    const computedPx = computedFont.endsWith("px")
+      ? Number.parseFloat(computedFont)
+      : NaN;
+    const fontSize =
+      (Number.isFinite(inlineFont) && inlineFont > 0 ? inlineFont : NaN) ||
+      (Number.isFinite(computedPx) && computedPx > 0 ? computedPx : NaN) ||
+      14;
+    el.style.lineHeight = `${Math.max(fontSize, Math.round(fontSize * TABLE_LAYOUT_STYLES.lineHeightRatio))}px`;
     el.style.padding = TABLE_LAYOUT_STYLES.cellPadding;
     el.style.whiteSpace = wrapEnabled ? "normal" : "nowrap";
     el.style.overflowWrap = wrapEnabled ? "anywhere" : "";

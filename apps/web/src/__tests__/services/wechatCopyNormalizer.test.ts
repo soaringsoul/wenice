@@ -417,22 +417,71 @@ describe("wechatCopyNormalizer", () => {
     ).toBe("");
   });
 
-  it("materializes unitless text line-height without changing the root inheritance", () => {
+  it("把无单位行高换成大于字号的 px，标题即使没写 font-size 也要转", () => {
     const container = document.createElement("div");
     container.innerHTML = `
       <section id="wemd" style="font-size:16px;line-height:1.8;">
         <p id="body" style="font-size:16px;line-height:1.8;">两行正文<br>不会被误报</p>
+        <h2 id="heading" style="line-height:1.6">
+          <span id="heading-text" style="font-size:17px">总量榜 vs 密度榜</span>
+        </h2>
       </section>
     `;
 
     normalizeCopyContainer(container);
 
-    expect((container.firstElementChild as HTMLElement).style.lineHeight).toBe(
-      "1.8",
+    const root = container.firstElementChild as HTMLElement;
+    const body = container.querySelector("#body") as HTMLElement;
+    const heading = container.querySelector("#heading") as HTMLElement;
+    expect(root.style.lineHeight).toMatch(/px$/);
+    expect(Number.parseFloat(root.style.lineHeight)).toBeGreaterThanOrEqual(
+      Number.parseFloat(root.style.fontSize || "16"),
     );
-    expect(
-      (container.querySelector("#body") as HTMLElement).style.lineHeight,
-    ).toBe("28.8px");
+    expect(body.style.lineHeight).toBe("28.8px");
+    expect(heading.style.lineHeight).toMatch(/px$/);
+    expect(Number.parseFloat(heading.style.lineHeight)).toBeGreaterThanOrEqual(
+      16,
+    );
+    expect(heading.style.lineHeight).not.toBe("1.6");
+  });
+
+  it("表格单元格的无单位行高也会换成 px，避免公众号 2.3.2 叠字误报", () => {
+    const container = document.createElement("div");
+    container.innerHTML = `
+      <section id="wemd">
+        <table>
+          <tr>
+            <td id="cell" style="font-size:14px;line-height:1.4">多行单元格<br>第二行</td>
+          </tr>
+        </table>
+      </section>
+    `;
+
+    normalizeCopyContainer(container);
+
+    const cell = container.querySelector("#cell") as HTMLElement;
+    expect(cell.style.lineHeight).toBe("19.6px");
+  });
+
+  it("引用块只有 em 字号、没有行高时，也要写成大于字号的 px，避免公众号 2.3.2", () => {
+    const container = document.createElement("div");
+    container.innerHTML = `
+      <section id="wemd" style="font-size:16px;line-height:1.6;">
+        <blockquote id="quote" class="multiquote-1" style="font-size:0.9em;padding:12px;">
+          <p id="quote-p" style="font-size:14px;line-height:26px">多行引用<br>第二行口径说明</p>
+        </blockquote>
+      </section>
+    `;
+
+    normalizeCopyContainer(container);
+
+    const quote = container.querySelector("#quote") as HTMLElement;
+    expect(quote.style.fontSize).toMatch(/px$/);
+    expect(quote.style.lineHeight).toMatch(/px$/);
+    expect(Number.parseFloat(quote.style.lineHeight)).toBeGreaterThanOrEqual(
+      Number.parseFloat(quote.style.fontSize),
+    );
+    expect(quote.style.lineHeight).not.toBe("1.6");
   });
 
   it("adds click fallback to touch-only SVG animations", () => {

@@ -2,14 +2,40 @@ import { describe, expect, it } from "vitest";
 import {
   clearGuideTheme,
   dataBlueprintTheme,
+  ditubangTheme,
   easternNotesTheme,
   modernEditorialTheme,
   whitespaceGalleryTheme,
 } from "@wemd/core";
 import { builtInThemes } from "../../store/themes/builtInThemes";
 import { useThemeStore } from "../../store/themeStore";
+import { usePublishingStore } from "../../store/publishingStore";
 
 describe("built-in themes", () => {
+  it("注册地图帮 v5 主题，选择器为 #wemd 且不含 CSS 变量", () => {
+    const theme = builtInThemes.find((item) => item.id === "ditubang");
+
+    expect(theme).toBeTruthy();
+    expect(theme?.name).toBe("地图帮");
+    expect(theme?.isBuiltIn).toBe(true);
+    expect(theme?.isSelectable).not.toBe(false);
+    expect(theme?.css).toContain(ditubangTheme);
+    expect(theme?.css).toContain("#wemd .column-kicker");
+    expect(theme?.css).toContain("text-indent: 0");
+    expect(theme?.css).not.toContain("var(--");
+    expect(theme?.css).toContain("#wemd .hljs");
+  });
+
+  it("ditubang 复制 CSS 按当前栏目解析且不含 var(--", () => {
+    usePublishingStore.getState().setColumn("hangye");
+    const css = useThemeStore.getState().getThemeCSS("ditubang");
+    expect(css).toContain("#1b1b21");
+    expect(css).toContain("#wemd .column-kicker");
+    expect(css).not.toContain("var(--");
+    usePublishingStore.getState().reset();
+    useThemeStore.getState().selectTheme("default");
+  });
+
   it("注册编辑部手记主题并组合基础与代码样式", () => {
     const theme = builtInThemes.find((item) => item.id === "modern-editorial");
 

@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef } from "react";
 import { useEditorStore, defaultMarkdown } from "../../store/editorStore";
 import { useThemeStore } from "../../store/themeStore";
 import { useHistoryStore } from "../../store/historyStore";
+import {
+  applyPublishingSnapshot,
+  publishingHistoryFields,
+  usePublishingStore,
+} from "../../store/publishingStore";
 
 const AUTO_SAVE_INTERVAL = 10 * 1000; // 10 秒 - Web 存储的较好平衡点
 const UNTITLED_TITLE = "未命名文章";
@@ -39,8 +44,19 @@ export function HistoryManager() {
   const activeId = useHistoryStore((state) => state.activeId);
   const setActiveId = useHistoryStore((state) => state.setActiveId);
   const loading = useHistoryStore((state) => state.loading);
+  const publishingTitle = usePublishingStore((state) => state.title);
+  const columnId = usePublishingStore((state) => state.columnId);
+  const issue = usePublishingStore((state) => state.issue);
 
-  const latestRef = useRef({ markdown, theme, customCSS, themeName });
+  const latestRef = useRef({
+    markdown,
+    theme,
+    customCSS,
+    themeName,
+    title: publishingTitle,
+    columnId,
+    issue,
+  });
   const prevMarkdownRef = useRef(markdown);
   const isInitialMountRef = useRef(true);
   const isRestoringRef = useRef(false);
@@ -65,7 +81,15 @@ export function HistoryManager() {
   }, [loading]);
 
   useEffect(() => {
-    latestRef.current = { markdown, theme, customCSS, themeName };
+    latestRef.current = {
+      markdown,
+      theme,
+      customCSS,
+      themeName,
+      title: publishingTitle,
+      columnId,
+      issue,
+    };
 
     const markdownChanged = markdown !== prevMarkdownRef.current;
     prevMarkdownRef.current = markdown;
@@ -114,22 +138,48 @@ export function HistoryManager() {
           markdown,
           theme,
           customCSS,
-          title: deriveTitle(markdown),
           themeName,
+          ...publishingHistoryFields(),
+          title: publishingTitle.trim() || deriveTitle(markdown),
         },
         { force: true },
       ).finally(() => {
         creatingInitialSnapshotRef.current = false;
       });
     }
-  }, [markdown, theme, customCSS, themeName, saveSnapshot, loading]);
+  }, [
+    markdown,
+    theme,
+    customCSS,
+    themeName,
+    publishingTitle,
+    columnId,
+    issue,
+    saveSnapshot,
+    loading,
+  ]);
 
   const persistLatestSnapshot = useCallback(async () => {
     const snapshot = latestRef.current;
     if (!snapshot.markdown.trim()) return;
 
-    // 如果用户未编辑或当前正在恢复历史记录，则阻止自动保存
-    if (!hasUserEditedRef.current || isRestoringRef.current) {
+    const publishingChanged = (() => {
+      const { activeId: currentActiveId, history: currentHistory } =
+        useHistoryStore.getState();
+      const entry = currentHistory.find((item) => item.id === currentActiveId);
+      if (!entry) return Boolean(snapshot.title.trim() || snapshot.issue);
+      return (
+        (entry.columnId ?? "") !== snapshot.columnId ||
+        (entry.issue ?? "") !== snapshot.issue ||
+        (snapshot.title.trim() ? entry.title !== snapshot.title.trim() : false)
+      );
+    })();
+
+    // 如果用户未编辑且发稿元数据也没变，则阻止自动保存
+    if (
+      (!hasUserEditedRef.current && !publishingChanged) ||
+      isRestoringRef.current
+    ) {
       return;
     }
 
@@ -147,8 +197,10 @@ export function HistoryManager() {
             markdown: snapshot.markdown,
             theme: snapshot.theme,
             customCSS: snapshot.customCSS,
-            title: deriveTitle(snapshot.markdown),
             themeName: snapshot.themeName,
+            columnId: snapshot.columnId,
+            issue: snapshot.issue,
+            title: snapshot.title.trim() || deriveTitle(snapshot.markdown),
           },
           { force: true },
         );
@@ -161,6 +213,9 @@ export function HistoryManager() {
       theme: snapshot.theme,
       customCSS: snapshot.customCSS,
       themeName: snapshot.themeName,
+      title: snapshot.title.trim() || deriveTitle(snapshot.markdown),
+      columnId: snapshot.columnId,
+      issue: snapshot.issue,
     });
   }, [persistActiveSnapshot, saveSnapshot]);
 
@@ -210,6 +265,7 @@ export function HistoryManager() {
       if (candidateEntry.id !== activeId) {
         setActiveId(candidateEntry.id);
       }
+      applyPublishingSnapshot(candidateEntry);
       hasAppliedInitialHistoryRef.current = true;
       return;
     }
@@ -224,6 +280,7 @@ export function HistoryManager() {
     selectTheme(candidateEntry.theme); // 使用 selectTheme 替代 setTheme + setThemeName
     setCustomCSS(candidateEntry.customCSS);
     setFilePath(candidateEntry.filePath);
+    applyPublishingSnapshot(candidateEntry);
     if (candidateEntry.filePath) {
       const last = Math.max(
         candidateEntry.filePath.lastIndexOf("/"),
@@ -241,6 +298,9 @@ export function HistoryManager() {
       theme: candidateEntry.theme,
       customCSS: candidateEntry.customCSS,
       themeName: candidateEntry.themeName,
+      title: usePublishingStore.getState().title,
+      columnId: usePublishingStore.getState().columnId,
+      issue: usePublishingStore.getState().issue,
     };
     hasUserEditedRef.current = false;
     isRestoringRef.current = false;

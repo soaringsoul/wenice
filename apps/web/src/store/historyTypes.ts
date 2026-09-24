@@ -6,6 +6,8 @@ export interface HistorySnapshot {
   themeName: string;
   customCSS: string;
   filePath?: string;
+  columnId?: string;
+  issue?: string;
   createdAt: string;
   savedAt: string;
 }

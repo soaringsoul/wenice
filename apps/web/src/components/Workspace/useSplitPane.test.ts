@@ -7,11 +7,11 @@ import {
 } from "./useSplitPane";
 
 describe("getEditorWidthBounds", () => {
-  it("宽窗口下为预览画布、双侧滚动条槽和边框预留 416px", () => {
+  it("宽窗口下为预览画布、双侧滚动条槽和边框预留 528px", () => {
     const bounds = getEditorWidthBounds(1216);
     expect(bounds.availableWidth).toBe(1200);
     expect(bounds.min).toBe(340);
-    expect(bounds.max).toBe(1200 - 416);
+    expect(bounds.max).toBe(1200 - 528);
   });
 
   it("窗口过窄放不下时上限退化为编辑器下限,不再继续压缩", () => {
@@ -23,8 +23,8 @@ describe("getEditorWidthBounds", () => {
 
 describe("getDesktopAppMinWidth", () => {
   it("随实测预览下限补足桌面应用宽度", () => {
-    expect(getDesktopAppMinWidth(416)).toBe(1080);
-    expect(getDesktopAppMinWidth(436)).toBe(1100);
+    expect(getDesktopAppMinWidth(528)).toBe(1192);
+    expect(getDesktopAppMinWidth(548)).toBe(1212);
   });
 });
 
@@ -55,11 +55,11 @@ describe("useSplitPane", () => {
     expect(result.current.minWidth).toBe(340);
   });
 
-  it("宽度超过上限时被夹回,保证预览至少 416px", () => {
+  it("宽度超过上限时被夹回,保证预览至少 528px", () => {
     const { result } = renderHook(() => useSplitPane());
     act(() => result.current.setWidth(2000));
     expect(result.current.editorWidth).toBe(result.current.maxWidth);
-    expect(result.current.editorWidth).toBe(768);
+    expect(result.current.editorWidth).toBe(656);
   });
 
   it("按实际滚动条槽和面板边框扩大预览最小宽度", async () => {
@@ -80,8 +80,8 @@ describe("useSplitPane", () => {
       result.current.previewContainerRef(scroller);
     });
 
-    // 402px 画布 + 32px 实际 gutter + 2px 实际边框
-    await waitFor(() => expect(result.current.maxWidth).toBe(748));
+    // 512px 画布 + 32px 实际 gutter + 2px 实际边框
+    await waitFor(() => expect(result.current.maxWidth).toBe(638));
   });
 
   it("尺寸指标变化时重新测量并在卸载时停止观察", async () => {
@@ -123,14 +123,14 @@ describe("useSplitPane", () => {
       result.current.previewContainerRef(scroller);
     });
 
-    await waitFor(() => expect(result.current.maxWidth).toBe(748));
+    await waitFor(() => expect(result.current.maxWidth).toBe(638));
     expect(observe).toHaveBeenCalledWith(workspace);
     expect(observe).toHaveBeenCalledWith(pane);
     expect(observe).toHaveBeenCalledWith(scroller);
 
     scrollerClientWidth = 394;
     act(() => resizeCallback?.([], {} as ResizeObserver));
-    await waitFor(() => expect(result.current.maxWidth).toBe(742));
+    await waitFor(() => expect(result.current.maxWidth).toBe(632));
 
     disconnect.mockClear();
     unmount();

@@ -15,6 +15,11 @@ import { useHistoryStore } from "../../store/historyStore";
 import { SidebarFooter } from "../Sidebar/SidebarFooter";
 import type { HistorySnapshot } from "../../store/historyStore";
 import { resolveNewArticleThemeSnapshot } from "../../utils/newArticleTheme";
+import {
+  applyPublishingSnapshot,
+  publishingHistoryFields,
+  usePublishingStore,
+} from "../../store/publishingStore";
 
 const PAGE_SIZE = 50;
 
@@ -66,10 +71,12 @@ export function IndexedHistoryPanel() {
       theme: themeState.themeId,
       customCSS: themeState.customCSS,
       themeName,
+      ...publishingHistoryFields(),
     });
     setMarkdown(entry.markdown);
     selectTheme(entry.theme);
     setCustomCSS(entry.customCSS);
+    applyPublishingSnapshot(entry);
     setActiveId(entry.id);
     setRenamingId(null);
     setActionMenuId(null);
@@ -89,9 +96,11 @@ export function IndexedHistoryPanel() {
           setMarkdown(nextEntry.markdown);
           selectTheme(nextEntry.theme);
           setCustomCSS(nextEntry.customCSS);
+          applyPublishingSnapshot(nextEntry);
         }
       } else {
         resetDocument();
+        usePublishingStore.getState().reset();
       }
     }
   };
@@ -109,6 +118,7 @@ export function IndexedHistoryPanel() {
       theme: themeState.themeId,
       customCSS: themeState.customCSS,
       themeName,
+      ...publishingHistoryFields(),
     });
     resetDocument({
       markdown: initial,
@@ -116,13 +126,16 @@ export function IndexedHistoryPanel() {
       customCSS: targetTheme.customCSS,
       themeName: targetTheme.themeName,
     });
+    usePublishingStore.getState().reset(true);
+    usePublishingStore.getState().setTitle("新文章");
     const newEntry = await saveSnapshot(
       {
         markdown: initial,
         theme: targetTheme.themeId,
         customCSS: targetTheme.customCSS,
-        title: "新文章",
         themeName: targetTheme.themeName,
+        ...publishingHistoryFields(),
+        title: "新文章",
       },
       { force: true },
     );
@@ -141,6 +154,9 @@ export function IndexedHistoryPanel() {
 
   const confirmRename = async (entry: HistorySnapshot) => {
     await updateTitle(entry.id, tempTitle);
+    if (entry.id === activeId) {
+      usePublishingStore.getState().setTitle(tempTitle);
+    }
     toast.success("标题已更新");
     setRenamingId(null);
   };

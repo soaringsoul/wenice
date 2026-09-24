@@ -163,7 +163,7 @@ describe("长文档预览锚点同步", () => {
     await waitFor(() => expect(previewAdapter).not.toBeNull());
 
     const previewContainer = container.querySelector(
-      ".preview-container",
+      ".preview-stage__screen",
     ) as HTMLElement;
     Object.defineProperties(previewContainer, {
       clientHeight: { configurable: true, value: 400 },
@@ -214,7 +214,7 @@ describe("长文档预览锚点同步", () => {
     await waitFor(() => expect(mermaidRender).toHaveBeenCalledOnce());
 
     const previewContainer = container.querySelector(
-      ".preview-container",
+      ".preview-stage__screen",
     ) as HTMLElement;
     Object.defineProperties(previewContainer, {
       clientHeight: { configurable: true, value: 400 },

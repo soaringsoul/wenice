@@ -13,6 +13,8 @@ import {
   type WorkspaceThemeSlice,
 } from "./themeWorkspaceActions";
 import { loadMirrorThemes, persistThemes } from "./themePersistence";
+import { composeDitubangThemeCss } from "../config/ditubangColumns";
+import { usePublishingStore } from "./publishingStore";
 
 // 深色模式 CSS 转换缓存
 const darkCssCache = new Map<string, string>();
@@ -177,14 +179,16 @@ export const useThemeStore = create<ThemeStore>((set, get) => {
     getThemeCSS: (themeId: string, darkMode?: boolean) => {
       const state = get();
 
-      // 先查找内置主题
-      const builtIn = builtInThemes.find((t) => t.id === themeId);
-      let css = builtIn ? builtIn.css : "";
-
-      // 再查找自定义主题
-      if (!css) {
-        const custom = state.customThemes.find((t) => t.id === themeId);
-        css = custom ? custom.css : builtInThemes[0].css;
+      let css = "";
+      if (themeId === "ditubang") {
+        css = composeDitubangThemeCss(usePublishingStore.getState().columnId);
+      } else {
+        const builtIn = builtInThemes.find((t) => t.id === themeId);
+        css = builtIn ? builtIn.css : "";
+        if (!css) {
+          const custom = state.customThemes.find((t) => t.id === themeId);
+          css = custom ? custom.css : builtInThemes[0].css;
+        }
       }
 
       // 深色模式下：使用微信颜色转换算法

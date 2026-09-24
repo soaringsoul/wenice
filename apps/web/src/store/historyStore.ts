@@ -81,7 +81,7 @@ function createSnapshot(data: HistorySnapshotInput): HistorySnapshot {
   };
 }
 
-function isSameSnapshot(a?: HistorySnapshot, b?: HistorySnapshotInput) {
+export function isSameSnapshot(a?: HistorySnapshot, b?: HistorySnapshotInput) {
   if (!a || !b) return false;
   return (
     a.markdown === b.markdown &&
@@ -89,11 +89,13 @@ function isSameSnapshot(a?: HistorySnapshot, b?: HistorySnapshotInput) {
     a.themeName === b.themeName &&
     a.customCSS === b.customCSS &&
     a.title === (b.title?.trim() || "未命名文章") &&
-    a.filePath === b.filePath
+    a.filePath === b.filePath &&
+    (a.columnId ?? "") === (b.columnId ?? "") &&
+    (a.issue ?? "") === (b.issue ?? "")
   );
 }
 
-function hasChanges(
+export function hasChanges(
   entry: HistorySnapshot,
   data: Partial<HistorySnapshotInput>,
 ) {
@@ -110,6 +112,13 @@ function hasChanges(
   )
     return true;
   if (data.filePath !== undefined && data.filePath !== entry.filePath)
+    return true;
+  if (
+    data.columnId !== undefined &&
+    (data.columnId ?? "") !== (entry.columnId ?? "")
+  )
+    return true;
+  if (data.issue !== undefined && (data.issue ?? "") !== (entry.issue ?? ""))
     return true;
   return false;
 }
@@ -229,6 +238,8 @@ export const useHistoryStore = create<HistoryStore>((set, get) => {
         ...data,
         title,
         themeName: data.themeName ?? entry.themeName,
+        columnId: data.columnId ?? entry.columnId,
+        issue: data.issue ?? entry.issue,
       };
       if (!hasChanges(entry, payload)) return entry;
       return updateEntryState(id, payload);

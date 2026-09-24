@@ -26,12 +26,12 @@ export function createWindow({
   const isWindows = process.platform === "win32";
 
   const mainWindow = new BrowserWindow({
-    width: 1200,
+    width: 1400,
     height: 800,
-    // 窗口最小宽度 = Web 桌面内容下限(apps/web App.css 的 .app[data-layout-mode="desktop"] = 1080:
-    // 文件栏 256 + 编辑器 ≥340 + 分隔条 16 + 预览画布 ≥402 + 留白)再加约 20px 窗口余量,
-    // 避免边缘触发横向滚动,并保证拖到最窄时预览 402px 画布不被挤压
-    minWidth: 1100,
+    // 窗口最小宽度 = Web 桌面内容下限(apps/web App.css 的 .app[data-layout-mode="desktop"] = 1192:
+    // 文件栏 256 + 编辑器 ≥340 + 分隔条 16 + 预览画布 ≥512 + 留白)再加约 20px 窗口余量,
+    // 避免边缘触发横向滚动,并保证拖到最窄时 480px 手机卡片不被挤压
+    minWidth: 1212,
     minHeight: 640,
     title: "WeMD",
     icon: windowIcon,

@@ -11,39 +11,28 @@
   user-select: none;
 }
 
+/* 侧栏内的「新建文章」：浅色强调钮（03 册 §2），顶栏已有唯一主按钮 */
 .fs-new-article-button {
-  height: 42px;
-  margin: 18px 14px 8px;
+  height: var(--control-h);
+  margin: var(--space-4) 14px var(--space-2);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  border: 1px solid color-mix(in srgb, var(--accent-primary) 82%, #000);
-  border-radius: 8px;
-  background-color: var(--accent-primary);
-  /* 与顶栏主 CTA 一致：极淡强调色渐变 + 柔投影表达主操作层级 */
-  background-image: var(--accent-gradient);
-  color: var(--on-accent);
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: 0 6px 16px -10px
-    color-mix(in srgb, var(--accent-primary) 70%, transparent);
+  gap: 6px;
+  border: 1px solid var(--brand-line);
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  font-size: 14px;
+  font-weight: 500;
   transition:
-    box-shadow 180ms ease,
-    transform 140ms ease;
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
 }
 
 .fs-new-article-button:hover,
 .fs-new-article-button:focus-visible {
-  box-shadow: 0 10px 22px -10px
-    color-mix(in srgb, var(--accent-primary) 78%, transparent);
-  transform: translateY(-1px);
-}
-
-.fs-new-article-button:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 10px -8px
-    color-mix(in srgb, var(--accent-primary) 70%, transparent);
+  background: var(--brand-soft-strong);
 }
 
 .fs-header {
@@ -80,8 +69,8 @@
 .fs-workspace-info:focus-visible,
 .fs-btn-secondary:focus-visible,
 .fs-sort-option:focus-visible {
-  outline: 2px solid var(--accent-primary);
-  outline-offset: 1px;
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .fs-workspace-info.active {
@@ -204,14 +193,10 @@
 }
 
 .fs-search-wrapper input:focus {
-  border-color: color-mix(
-    in srgb,
-    var(--accent-primary) 55%,
-    var(--border-light)
-  );
-  background: var(--bg-primary);
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--accent-primary) 18%, transparent);
+  outline: none;
+  border-color: var(--brand);
+  background: var(--surface);
+  box-shadow: var(--focus-ring);
 }
 
 .fs-sort-wrapper {
@@ -228,10 +213,10 @@
   padding: 4px;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  box-shadow: 0 8px 18px -12px rgba(15, 23, 42, 0.62);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
 }
 
 .fs-sort-option {
@@ -300,15 +285,17 @@
 
 .fs-item:hover,
 .fs-folder:hover {
-  background: color-mix(in srgb, var(--bg-hover) 68%, transparent);
-  color: var(--text-primary);
+  background: var(--surface-soft);
+  color: var(--ink);
 }
 
+/* 当前项：浅橙底 + 橙字 + 右缘 2px 橙条（03 册 §6 侧栏） */
 .fs-item.active,
 .fs-folder.active {
   border-color: transparent;
-  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
-  color: var(--accent-primary);
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  box-shadow: inset -2px 0 0 var(--brand);
 }
 
 .fs-item.drop-target,
@@ -343,8 +330,8 @@
 }
 
 .fs-item.active .fs-title {
-  color: var(--accent-primary);
-  font-weight: 600;
+  color: var(--brand-dark);
+  font-weight: 500;
 }
 
 .fs-meta-row {
@@ -442,9 +429,9 @@
 
 .fs-rename input:focus,
 .fs-new-folder-input:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--accent-primary) 18%, transparent);
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: var(--focus-ring);
 }
 
 .fs-rename button {
@@ -489,10 +476,10 @@
   flex-direction: column;
   gap: 2px;
   padding: 5px;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  box-shadow: 0 10px 24px -14px rgba(15, 23, 42, 0.68);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
 }
 
 .fs-context-menu {
@@ -548,22 +535,21 @@
 .fs-confirm-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1300;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(15, 23, 42, 0.34);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.45);
 }
 
 .fs-confirm-modal {
   width: min(360px, 90vw);
-  padding: 20px;
-  border: 1px solid var(--border-light);
-  border-radius: 12px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  box-shadow: 0 16px 32px -20px rgba(15, 23, 42, 0.8);
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-md);
 }
 
 .fs-confirm-modal h4 {
@@ -586,15 +572,21 @@
 
 .fs-confirm-actions button {
   min-width: 76px;
-  height: 34px;
-  border-radius: 8px;
-  font-size: 12px;
+  height: var(--control-h);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
 }
 
+/* 危险钮：白底 + 危险色描边字，不做实心（03 册 §2） */
 .fs-confirm-actions .btn-danger {
-  border-color: color-mix(in srgb, var(--error) 58%, transparent);
-  background: color-mix(in srgb, var(--error) 12%, var(--bg-primary));
-  color: var(--error);
+  border-color: var(--danger);
+  background: var(--surface);
+  color: var(--danger);
+}
+
+.fs-confirm-actions .btn-danger:hover {
+  border-color: #ff7875;
+  color: #ff7875;
 }
 
 @media (prefers-reduced-motion: reduce) {

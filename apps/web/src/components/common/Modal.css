@@ -1,26 +1,27 @@
+/* 模态（03 册 §8.2）：圆角 --radius-md、--shadow-md、遮罩 rgba(0,0,0,.45)、层级 --z-modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.42);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: var(--z-modal);
   padding: 16px;
-  animation: modal-overlay-in 160ms ease-out;
+  animation: modal-overlay-in var(--dur-fast) ease-out;
 }
 
 .modal-panel {
-  background: var(--bg-primary);
-  border-radius: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
   width: min(620px, calc(100vw - 32px));
   max-height: min(760px, calc(100vh - 32px));
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(15, 23, 42, 0.14);
-  border: var(--border-width) solid var(--border-light);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--line);
   display: flex;
   flex-direction: column;
-  animation: modal-panel-in 160ms ease-out;
+  animation: modal-overlay-in var(--dur-fast) ease-out;
 }
 
 .modal-header {
@@ -30,7 +31,7 @@
   gap: 16px;
   min-height: 54px;
   padding: 12px 16px 12px 18px;
-  border-bottom: var(--border-width) solid var(--border-light);
+  border-bottom: 1px solid var(--line);
   flex-shrink: 0;
 }
 
@@ -73,14 +74,13 @@
 }
 
 .modal-close:hover {
-  color: var(--text-primary);
-  background: var(--bg-hover);
-  border-color: var(--border-light);
+  color: var(--ink);
+  background: var(--surface-soft);
 }
 
 .modal-close:focus-visible {
-  outline: 2px solid var(--accent-primary);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .modal-body {
@@ -110,13 +110,6 @@
   }
 }
 
-@keyframes modal-panel-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.99);
-  }
-}
-
 @media (max-width: 640px) {
   .modal-overlay {
     align-items: flex-end;
@@ -127,7 +120,7 @@
   .modal-panel.modal-narrow {
     width: 100%;
     max-height: calc(100vh - 16px);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
   }
 
   .modal-panel.image-host-modal {

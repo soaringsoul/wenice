@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, useRef, useMemo } from "react";
+import { Monitor, Smartphone } from "lucide-react";
 import mermaid from "mermaid";
 import { createMarkdownParser, processHtml } from "@wemd/core";
 import { useEditorStore } from "../../store/editorStore";
@@ -32,6 +33,17 @@ import {
   loadMathJax,
   needsMathJaxPreview,
 } from "../../utils/mathJaxLoader";
+import { PreviewFormatBar } from "./PreviewFormatBar";
+import {
+  loadPreviewDevice,
+  savePreviewDevice,
+  type PreviewDevice,
+} from "./previewDevice";
+import { usePublishingStore } from "../../store/publishingStore";
+import {
+  getDitubangColumn,
+  publishingChromeHtml,
+} from "../../config/ditubangColumns";
 import "./MarkdownPreview.css";
 
 interface MarkdownPreviewProps {
@@ -69,6 +81,8 @@ export function MarkdownPreview({
 }: MarkdownPreviewProps) {
   const { markdown } = useEditorStore();
   const { themeId: theme, customCSS, getThemeCSS } = useThemeStore();
+  const columnId = usePublishingStore((state) => state.columnId);
+  const issue = usePublishingStore((state) => state.issue);
   const uiTheme = useUITheme((state) => state.theme);
   const [html, setHtml] = useState("");
   const [linkToFootnoteEnabled, setLinkToFootnoteEnabledState] = useState(() =>
@@ -78,6 +92,9 @@ export function MarkdownPreview({
     getPublishingPreference("tableWrap"),
   );
   const [mathJaxReady, setMathJaxReady] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>(() =>
+    loadPreviewDevice(),
+  );
   const previewRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   // 锚点缓存跨 html 变化保留在 ref 上，内容变了只置空、不重建 adapter
@@ -86,10 +103,13 @@ export function MarkdownPreview({
   const registerScrollContainer = useCallback(
     (container: HTMLDivElement | null) => {
       scrollContainerRef.current = container;
-      onScrollContainerChange?.(container);
     },
-    [onScrollContainerChange],
+    [],
   );
+  const handlePreviewDevice = useCallback((next: PreviewDevice) => {
+    setPreviewDevice(next);
+    savePreviewDevice(next);
+  }, []);
 
   // 获取当前主题对象（注意与 line 25 的 themeId 区分）
   const currentTheme = useThemeStore(
@@ -134,7 +154,14 @@ export function MarkdownPreview({
   );
 
   useEffect(() => {
-    const rawHtml = parser.render(markdown);
+    let rawHtml = parser.render(markdown);
+    if (theme === "ditubang") {
+      rawHtml =
+        publishingChromeHtml({
+          columnName: getDitubangColumn(columnId).name,
+          issue,
+        }) + rawHtml;
+    }
     const previewHtml = linkToFootnoteEnabled
       ? convertLinksToFootnotes(rawHtml)
       : rawHtml;
@@ -154,6 +181,8 @@ export function MarkdownPreview({
     parser,
     uiTheme,
     linkToFootnoteEnabled,
+    columnId,
+    issue,
   ]);
 
   const mermaidTheme = designerVars?.mermaidTheme || "base";
@@ -341,29 +370,64 @@ export function MarkdownPreview({
     <div className="markdown-preview">
       <div className="preview-header">
         <span className="preview-title">实时预览</span>
-        <span className="preview-subtitle">微信排版效果</span>
+        <div
+          className="preview-device-toggle"
+          role="group"
+          aria-label="预览尺寸"
+        >
+          <button
+            type="button"
+            className="preview-device-toggle__btn"
+            aria-label="手机预览"
+            aria-pressed={previewDevice === "phone"}
+            onClick={() => handlePreviewDevice("phone")}
+          >
+            <Smartphone size={15} strokeWidth={2} />
+          </button>
+          <button
+            type="button"
+            className="preview-device-toggle__btn"
+            aria-label="电脑预览"
+            aria-pressed={previewDevice === "desktop"}
+            onClick={() => handlePreviewDevice("desktop")}
+          >
+            <Monitor size={15} strokeWidth={2} />
+          </button>
+        </div>
       </div>
       <div
         className="preview-container"
-        ref={registerScrollContainer}
-        onClick={(e) => {
-          const target = e.target as HTMLElement;
-          const link = target.closest("a");
-          if (link && link.href && window.electron?.shell?.openExternal) {
-            e.preventDefault();
-            window.electron.shell.openExternal(link.href);
-          }
-        }}
+        data-device={previewDevice}
+        ref={onScrollContainerChange}
       >
-        <div className="preview-content">
-          <style
-            dangerouslySetInnerHTML={{
-              __html: getThemeCSS(theme, uiTheme === "dark"),
+        <div className="preview-stage" data-device={previewDevice}>
+          <div
+            className="preview-stage__screen"
+            ref={registerScrollContainer}
+            onClick={(e) => {
+              const target = e.target as HTMLElement;
+              const link = target.closest("a");
+              if (link && link.href && window.electron?.shell?.openExternal) {
+                e.preventDefault();
+                window.electron.shell.openExternal(link.href);
+              }
             }}
-          />
-          <div ref={previewRef} dangerouslySetInnerHTML={{ __html: html }} />
+          >
+            <div className="preview-content">
+              <style
+                dangerouslySetInnerHTML={{
+                  __html: getThemeCSS(theme, uiTheme === "dark"),
+                }}
+              />
+              <div
+                ref={previewRef}
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+            </div>
+          </div>
         </div>
       </div>
+      <PreviewFormatBar previewRoot={previewRef} />
     </div>
   );
 }

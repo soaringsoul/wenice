@@ -46,12 +46,13 @@ describe("编辑器等宽字体", () => {
   });
 
   it("等宽字体栈以 Maple Mono 打头，并保留系统与 CJK 兜底", () => {
-    const stacks = [...tokensCss.matchAll(/--ui-font-mono:\s*([^;]+);/g)].map(
-      (match) => match[1].replace(/\s+/g, " ").trim(),
-    );
+    const stacks = [
+      ...tokensCss.matchAll(/(?<!ui-)--font-mono:\s*([^;]+);/g),
+    ].map((match) => match[1].replace(/\s+/g, " ").trim());
 
-    // 亮色与暗色两个 token 块都要覆盖到
-    expect(stacks).toHaveLength(2);
+    // 规范令牌只在 :root 声明一次；暗色块只覆盖颜色，不重复字体
+    expect(stacks).toHaveLength(1);
+    expect(tokensCss).toMatch(/--ui-font-mono:\s*var\(--font-mono\);/);
     for (const stack of stacks) {
       expect(stack.startsWith('"Maple Mono"')).toBe(true);
       // 字体加载失败时的系统兜底

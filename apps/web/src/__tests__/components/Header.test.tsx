@@ -15,6 +15,21 @@ import { useEditorStore } from "../../store/editorStore";
 vi.mock("../../hooks/useWindowControls");
 vi.mock("../../hooks/useUITheme");
 vi.mock("../../store/editorStore");
+vi.mock("../../store/historyStore", () => {
+  const state = {
+    persistActiveSnapshot: vi.fn(),
+    saveSnapshot: vi.fn(),
+    setActiveId: vi.fn(),
+    activeId: null,
+  };
+  return {
+    useHistoryStore: Object.assign(
+      (selector?: (value: typeof state) => unknown) =>
+        selector ? selector(state) : state,
+      { getState: () => state },
+    ),
+  };
+});
 
 // Mock components that might cause issues in JSDOM or aren't focus of test
 vi.mock("../../components/Theme/ThemePanel", () => ({
@@ -81,10 +96,20 @@ describe("Header", () => {
     }
 
     // Setup default hook returns
-    vi.mocked(useEditorStore).mockReturnValue({
+    const editorState = {
       copyToWechat: mockCopyToWechat,
       copyAsHtml: mockCopyAsHtml,
-    });
+      markdown: "",
+      setMarkdown: vi.fn(),
+      resetDocument: vi.fn(),
+    };
+    vi.mocked(useEditorStore).mockImplementation(((
+      selector?: (state: typeof editorState) => unknown,
+    ) =>
+      typeof selector === "function"
+        ? selector(editorState)
+        : editorState) as unknown as typeof useEditorStore);
+    Object.assign(useEditorStore, { getState: () => editorState });
 
     vi.mocked(useUITheme).mockImplementation(
       (selector: (state: any) => any) => {
@@ -111,12 +136,16 @@ describe("Header", () => {
   it("renders logo and core elements", () => {
     render(<Header />);
 
-    expect(screen.getByRole("img", { name: "WeMD Logo" })).toHaveAttribute(
+    expect(screen.getByRole("img", { name: "地图帮" })).toHaveAttribute(
       "src",
       "/favicon-dark.svg",
     );
-    expect(screen.getByText("WeMD")).toHaveClass("logo-text");
+    expect(screen.getByText("地图帮")).toBeInTheDocument();
+    expect(screen.getByText("排版台")).toBeInTheDocument();
     expect(screen.getByText("复制到公众号")).toBeInTheDocument();
+    expect(screen.getByLabelText("栏目")).toBeInTheDocument();
+    expect(screen.getByLabelText("期号")).toBeInTheDocument();
+    expect(screen.queryByLabelText("标题")).not.toBeInTheDocument();
   });
 
   it("toggles theme interaction", () => {
@@ -289,5 +318,83 @@ describe("Header", () => {
         "true",
       );
     });
+  });
+
+  it("打开面板时对应一级导航项进入激活态，关闭后还原", async () => {
+    render(<Header />);
+
+    const nav = screen.getByRole("navigation", { name: "编辑器设置" });
+    const themeButton = within(nav).getByRole("button", { name: "文章主题" });
+    expect(themeButton).not.toHaveClass("is-active");
+    expect(themeButton).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(themeButton);
+    expect(themeButton).toHaveClass("is-active");
+    expect(themeButton).toHaveAttribute("aria-pressed", "true");
+    expect(await screen.findByTestId("theme-panel")).toBeInTheDocument();
+  });
+
+  it("只有一个主按钮：复制到公众号", () => {
+    render(<Header />);
+
+    const header = document.querySelector(".app-header") as HTMLElement;
+    const primaries = header.querySelectorAll(".btn-primary");
+    expect(primaries).toHaveLength(1);
+    expect(primaries[0]).toHaveTextContent("复制到公众号");
+    expect(
+      within(header).getByRole("button", { name: "复制 HTML" }),
+    ).toHaveClass("btn-secondary");
+  });
+
+  it("复制过程中按钮进入 loading 并禁用，完成后还原", async () => {
+    let finish: () => void = () => {};
+    mockCopyToWechat.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    render(<Header />);
+
+    const header = document.querySelector(".app-header") as HTMLElement;
+    const copyButton = within(header).getByRole("button", {
+      name: "复制到公众号",
+    });
+    fireEvent.click(copyButton);
+    fireEvent.click(copyButton);
+
+    expect(copyButton).toBeDisabled();
+    expect(copyButton).toHaveClass("is-loading");
+    expect(copyButton).toHaveAttribute("aria-busy", "true");
+    expect(mockCopyToWechat).toHaveBeenCalledTimes(1);
+
+    finish();
+    await waitFor(() => expect(copyButton).not.toBeDisabled());
+    expect(copyButton).not.toHaveClass("is-loading");
+  });
+
+  it("窄屏「更多」菜单收纳一级设置项，可打开、可触发、可 Esc 关闭", async () => {
+    render(<Header />);
+
+    const moreButton = screen.getByRole("button", { name: "更多" });
+    expect(moreButton).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+
+    fireEvent.click(moreButton);
+    const menu = screen.getByRole("menu");
+    expect(moreButton).toHaveAttribute("aria-expanded", "true");
+    expect(
+      within(menu).getByRole("menuitem", { name: "图床设置" }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(within(menu).getByRole("menuitem", { name: "图床设置" }));
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(
+      await screen.findByTestId("image-host-settings"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(moreButton);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 });

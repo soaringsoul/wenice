@@ -192,6 +192,22 @@ describe("wechatCopyService clipboard strategy", () => {
     expect(mocked.toastError).not.toHaveBeenCalled();
   });
 
+  it("复制时可前置栏目 kicker HTML", async () => {
+    vi.spyOn(document, "execCommand").mockImplementation(
+      dispatchSuccessfulCopy,
+    );
+
+    await copyToWechat("test", "#wemd p { margin: 18px 0; }", {
+      prefixHtml:
+        '<p class="column-kicker"><span class="content">地图新手村</span></p>',
+    });
+
+    expect(mocked.materializeCounterPseudoContent).toHaveBeenCalledWith(
+      expect.stringContaining("column-kicker"),
+      expect.any(String),
+    );
+  });
+
   it("复制成功提示不使用 emoji 图标", async () => {
     vi.spyOn(document, "execCommand").mockImplementation(
       dispatchSuccessfulCopy,
